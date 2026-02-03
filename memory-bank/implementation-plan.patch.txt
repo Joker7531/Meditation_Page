@@ -1,0 +1,29 @@
+﻿*** Begin Patch
+*** Update File: memory-bank/implementation-plan.md
+@@
+ ## 0) 浜や粯杈圭晫涓庡師鍒欙紙鍏堝榻愶紝閬垮厤杩斿伐锛?
+@@
+ ### Step 0.1 鈥?閿佸畾 MVP 鑼冨洿涓庘€滈潪鍋氫笉鍙?鏄庣‘涓嶅仛鈥?
+ - 鏄庑…
+-  - 鏃堕暱閫夋嫨锛?/10/15 + 鑷畾涔?1鈥?0 鏁存暟锛変笌鏍￠獙
++  - 鏃堕暱閫夋嫨锛?/10/15 + 鑷畾涔?1鈥?60 鏁存暟锛変笌鏍￨獙锛堜互 GDD 涓哄噯锛夛級
+@@
+ **娴嬭瘯锛堥獙鏀舵竻鍗曟槧灏勶級**
+ - 浜…
++
++### Step 0.2 鈥?鍏抽敭鍙ｅ緞涓庡喅绛栵紙鍐欐锛岄伩鍏嶈繑宸ワ級
++- **鏃堕暱浼犻€掞細URL query 涓轰富锛宻essionStorage 涓哄**
++  - Landing 鈫? Meditation锛氫富瑕佺敤 query 浼犻€?`durationMin`
++  - SessionStorage锛氫綔涓鸿ˉ寮猴紙refresh / shallow navigation 绛夛級
++  - 直达 `/meditation` 缺参数：默认 10 分钟并提示
++- **自定义时长：** 1–60 分钟，仅整数，步进 1 分钟
++- **目标时长：** `targetDurationSec = durationMin * 60`（整秒）
++- **4-7-8 阶段：** `t < 4` inhale；`4 <= t < 11` hold；`11 <= t < 19` exhale；边界时显示下一阶段文案
++- **暂停：** 冻结计时与动画相位，继续时从当前位置推进
++- **提早结束显示：** `completedCycles = floor(elapsedActiveSec / 19)`（做完 1 轮显示 1，下一轮不完整不计入）
++- **时间推进/阶段提示：** `requestAnimationFrame` 作为真源驱动
++- **缩放动画：** 严格按 4/7/8 分段；段内 `ease-in-out` 插值；4s/11s/19s 边界严格对齐
++- **prefers-reduced-motion: reduce：** 计时与文案不变；禁用粒子；缩放改为阶段离散状态（阶段内 `transform` 恒定，仅允许阶段切换短过渡）或完全静态
++- **测试精度：** unit 可 fake timers（±50ms/±100ms），UI 按整秒，E2E 禁止依赖 ms 精度（区间容差）
++- **<500KB 口径：** 生产模式首次加载时 Network 中 `/_next/static/` 的 JS(+CSS) `Transferred` 总和；优先 br（无 br 则 gzip），并注明
+*** End Patch
