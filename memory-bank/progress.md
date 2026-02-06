@@ -33,6 +33,15 @@
 ## 2026-02-05
 
 ### Work Completed
+- **Visual Polish & Branding**:
+  - Integrated `Caveat` handwritten font for a more organic feel. Applied specifically to the "Meditation" title, breathing phase text ("Breathe In/Hold/Exhale"), and control buttons.
+  - Implemented a full-screen dark overlay during the "Warmup" phase to focus attention.
+  - Added a "zoom-in" animation (scale 3x -> 1x) for the countdown numbers (3, 2, 1).
+  - Adjusted progress bar width and font sizes for better visual hierarchy.
+- **Logic Refinements**:
+  - Fixed "Restart" behavior: now correctly resets to the **Warmup** phase (triggering the 3s countdown) instead of immediately starting the breathing loop.
+
+### Work Completed
 - **Fixed Wave Animation Distortion**:
   - Refined wave logic in `MeditationClient.tsx` to be purely radial (scalar scale modifier) instead of Cartesian vector offset.
   - This ensures the ring shape remains perfectly circular while "breathing" and "rippling".

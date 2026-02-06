@@ -48,8 +48,10 @@ This repository contains a runnable **Next.js App Router** application under `ap
 - Reduced motion: timer + text unchanged; visual scaling becomes discrete per phase.
 
 ### Visuals
-- Breathing circle scaling follows 0.8→1.2→0.8 across 4/7/8 seconds.
-- Particles P0: deterministic 50-dot layout around the circle.
+- **Typography**: Uses `Inter` for functional UI and `Caveat` (handwritten style) for the "human" elements: Title, Phase Prompts ("Breathe In"), and Controls.
+- **Warmup**: dedicated phase with a full-screen dark overlay and a zoom-in countdown animation (3-2-1) before the session begins.
+- **Breathing circle**: scaling follows 0.8→1.2→0.8 across 4/7/8 seconds with a radial ripple effect.
+- **Particles**: P0 deterministic 50-dot layout + ~180 background particles.
 
 ### Tests
 - Unit: `src/lib/breathing.ts` boundaries and formatting.
