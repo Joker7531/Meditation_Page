@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const DURATION_MIN_KEY = "breathing:durationMin";
@@ -16,7 +16,7 @@ function isValidDurationMin(n: number | null): n is number {
   return n !== null && n >= 1 && n <= 60;
 }
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -133,5 +133,13 @@ export default function Home() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <HomeContent />
+    </Suspense>
   );
 }

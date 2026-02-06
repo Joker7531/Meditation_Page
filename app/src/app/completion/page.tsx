@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { completedCycles, formatDuration } from "../../lib/breathing";
 
@@ -40,7 +40,7 @@ function coerceInt(raw: string | null): number | null {
   return Number.isInteger(n) ? n : null;
 }
 
-export default function CompletionPage() {
+function CompletionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -138,5 +138,13 @@ export default function CompletionPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function CompletionPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <CompletionContent />
+    </Suspense>
   );
 }

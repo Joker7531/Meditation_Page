@@ -29,3 +29,12 @@
   - Step 6.2: fallback messaging for missing critical APIs (e.g., no requestAnimationFrame)
   - Step 5.3: strict behavior on Landing after returning from completion (keep vs clear selection)
   - Step 7.x: lightweight perf baseline evidence (manual)
+
+## 2026-02-05
+
+### Work Completed
+- **Fixed Wave Animation Distortion**:
+  - Refined wave logic in `MeditationClient.tsx` to be purely radial (scalar scale modifier) instead of Cartesian vector offset.
+  - This ensures the ring shape remains perfectly circular while "breathing" and "rippling".
+  - Maintained the "tidal lag" (ripple) effect where inner particles move before outer ones.
+  - Verified logic: `finalScale = targetScale + waveScaleDelta`, preserving radial direction.

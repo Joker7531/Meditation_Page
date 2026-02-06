@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type Offset = { dx: number; dy: number };
@@ -125,7 +125,7 @@ function flowVelocity(
 
   const ampNoise =
     0.5 + 0.5 * valueNoise2D(x * 1.9 + 7.1, y * 1.9 + 3.3, seed + 911);
-  const speedPxPerSec = 3 + 7 * ampNoise; // 3-10 px/s
+  const speedPxPerSec = 1.5 + 3.5 * ampNoise; // Reduced flow speed
 
   return {
     vx: Math.cos(theta) * speedPxPerSec,
@@ -133,50 +133,25 @@ function flowVelocity(
   };
 }
 
-function smoothstep(edge0: number, edge1: number, x: number) {
-  const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
-  return t * t * (3 - 2 * t);
+function getBreathingScale(tInCycle: number) {
+  // Wrap time to [0, 19)
+  let t = tInCycle % BREATH_CYCLE_SEC;
+  if (t < 0) t += BREATH_CYCLE_SEC;
+
+  // Inhale (0-4s): 0.8 -> 1.4
+  if (t < 4) {
+    const p = t / 4;
+    return 0.8 + (1.4 - 0.8) * p;
+  }
+  // Hold (4-11s): 1.4
+  if (t < 11) {
+    return 1.4;
+  }
+  // Exhale (11-19s): 1.4 -> 0.8
+  const p = (t - 11) / 8;
+  return 1.4 - (1.4 - 0.8) * p;
 }
 
-function smootherstep(edge0: number, edge1: number, x: number) {
-  const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
-  return t * t * t * (t * (t * 6 - 15) + 10);
-}
-
-function holdJitterOffset(
-  xPct: number,
-  yPct: number,
-  seed: number,
-  tSec: number,
-  tInCycleSec: number,
-): { dx: number; dy: number } {
-  // Hold window is [4, 11). To avoid visible "jumps" at hold start/end,
-  // fade jitter in/out using a short smoothstep envelope.
-  const x = (xPct - 50) / 50;
-  const y = (yPct - 50) / 50;
-
-  const holdStart = 4;
-  const holdEnd = 11;
-  const fadeInLen = 1.4;
-  const fadeOutLen = 0.6;
-
-  const fadeIn = smootherstep(holdStart, holdStart + fadeInLen, tInCycleSec);
-  const fadeOut = 1 - smootherstep(holdEnd - fadeOutLen, holdEnd, tInCycleSec);
-  const env = fadeIn * fadeOut;
-
-  const hz = 1.1;
-  const ph =
-    valueNoise2D(x * 2.2 + 1.7, y * 2.2 + 9.4, seed + 1207) * Math.PI * 2;
-
-  const ampNoise =
-    0.5 +
-    0.5 * valueNoise2D(x * 2.6 + tSec * 0.2, y * 2.6 + tSec * 0.2, seed + 1301);
-  const amp = (0.6 + 1.2 * ampNoise) * env;
-
-  const jx = Math.cos(tSec * Math.PI * 2 * hz + ph) * amp;
-  const jy = Math.sin(tSec * Math.PI * 2 * (hz * 0.9) + ph * 0.7) * amp;
-  return { dx: jx, dy: jy };
-}
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -286,8 +261,6 @@ export default function MeditationClient() {
   );
 
   const positionsRef = useRef<Map<number, Offset>>(new Map());
-
-  const phaseKey = `${phase.phase}`;
 
   const phaseOpacity = useMemo(() => {
     if (status === "paused") return 0.7;
@@ -635,7 +608,7 @@ export default function MeditationClient() {
     }
   }
 
-  function writeSummary(endReason: EndReason, elapsed: number) {
+  const writeSummary = useCallback((endReason: EndReason, elapsed: number) => {
     const summary: Summary = {
       elapsedActiveSec: elapsed,
       targetDurationSec: init.targetDurationSec,
@@ -644,7 +617,7 @@ export default function MeditationClient() {
       durationMin: init.durationMin,
     };
     window.sessionStorage.setItem(SUMMARY_KEY, JSON.stringify(summary));
-  }
+  }, [init.durationMin, init.targetDurationSec]);
 
   function end(endReason: EndReason) {
     stopRaf();
@@ -690,7 +663,7 @@ export default function MeditationClient() {
     return () => {
       stopRaf();
     };
-  }, [init.targetDurationSec, router, status]);
+  }, [init.targetDurationSec, router, status, writeSummary]);
 
   const elapsedRounded = Math.floor(elapsedActiveSec);
 
@@ -703,7 +676,7 @@ export default function MeditationClient() {
       className="min-h-screen text-zinc-100"
       style={{
         background:
-          "radial-gradient(1200px circle at 50% 20%, #0a0e14 0%, #020308 55%, #000000 100%)",
+          "radial-gradient(1200px circle at 50% 20%, #1e1b4b 0%, #0f172a 55%, #020617 100%)",
       }}
     >
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-6 px-6">
@@ -783,34 +756,7 @@ export default function MeditationClient() {
                   };
                 }
 
-                // 0-4 inhale: 0.8 -> 1.2
-                if (tInCycle < 4) {
-                  const p = tInCycle / 4;
-                  const scale = 0.8 + (1.2 - 0.8) * p;
-                  return {
-                    transform: `scale(${scale.toFixed(4)})`,
-                    transition: "transform 0ms linear",
-                    willChange: "transform",
-                  };
-                }
-
-                // 4-11 hold: 1.2
-                if (tInCycle < 11) {
-                  return {
-                    transform: "scale(1.2)",
-                    transition: "transform 0ms linear",
-                    willChange: "transform",
-                  };
-                }
-
-                // 11-19 exhale: 1.2 -> 0.8
-                const p = (tInCycle - 11) / 8;
-                const scale = 1.2 - (1.2 - 0.8) * p;
-                return {
-                  transform: `scale(${scale.toFixed(4)})`,
-                  transition: "transform 0ms linear",
-                  willChange: "transform",
-                };
+                return { transform: "scale(1)" };
               })()}
             >
               <div
@@ -821,12 +767,10 @@ export default function MeditationClient() {
                 {(() => {
                   const phaseColor =
                     phase.phase === "inhale"
-                      ? "#A8E6CF"
+                      ? "#67e8f9" // Cyan 300
                       : phase.phase === "hold"
-                        ? "#DCEDC1"
-                        : "#FFD3B6";
-
-                  const isHold = tInCycle >= 4 && tInCycle < 11;
+                        ? "#c084fc" // Purple 400
+                        : "#fbbf24"; // Amber 400
 
                   // Integrate motion into a persistent per-particle position so flow/jitter are
                   // always applied on top of the current position (no phase switching jumps).
@@ -840,54 +784,133 @@ export default function MeditationClient() {
                       let dx = dyn.dx;
                       let dy = dyn.dy;
 
-                      const holdJ = holdJitterOffset(
-                        pp.x,
-                        pp.y,
-                        pp.particleSeed,
-                        elapsedActiveSec,
-                        tInCycle,
-                      );
+                      // 1. Calculate Phase-Based Scale with Lag
+                      // Normalize distance: 0 (center) to 1 (edge)
+                      const rPx = (Math.hypot(pp.x - 50, pp.y - 50) / 50) * 300;
+                      const dRatio = clamp(rPx / 300, 0, 1);
 
-                      // Mixed velocity field with smooth cross-fade at inhale<->hold and hold<->exhale.
-                      const wHold =
-                        smootherstep(4, 5.4, tInCycle) *
-                        (1 - smootherstep(10.4, 11, tInCycle));
-                      const wFlow = 1 - wHold;
+                      let currentScale = 1.0;
 
-                      // Keep ring shape: dynamic offset is always pulled back to 0.
-                      const stiffness = 0.9;
-                      const ringPullVx = -dx * stiffness;
-                      const ringPullVy = -dy * stiffness;
-                      dx += ringPullVx * dt;
-                      dy += ringPullVy * dt;
+                      // Helper for smooth easing (Sine)
+                      const easeInOutSine = (x: number) => -(Math.cos(Math.PI * x) - 1) / 2;
+                      // Helper for smooth masking (Hermite)
+                      const smoothStep = (x: number) => x * x * (3 - 2 * x);
 
-                      const flowV = flowVelocity(
-                        pp.x,
-                        pp.y,
-                        pp.particleSeed,
-                        elapsedActiveSec,
-                      );
+                      if (tInCycle < 4) {
+                        // --- INHALE (0-4s) ---
+                        // Target: 0.8 -> 1.4
+                        const phaseDur = 4.0;
+                        const p = tInCycle / phaseDur;
 
-                      // Convert hold behavior to an explicit velocity contribution, then blend
-                      // `flow` and `hold-jitter` velocities with smooth weights in the same frame.
-                      const follow = 7.0; // 1/s
-                      const holdErrX = holdJ.dx - dx;
-                      const holdErrY = holdJ.dy - dy;
+                        // Logic: All start at t=0.
+                        // Outer is faster initially to create separation, then Inner catches up.
+                        // Or simple easing variation:
+                        // Inner: Sine Ease (Slow start, fast middle, slow end)
+                        // Outer: Cubic Ease Out (Fast start, slow end) -> "Expands out eagerly"
 
-                      let holdVx = holdErrX * follow;
-                      let holdVy = holdErrY * follow;
+                        // Let's try explicit curve shaping for "Inner leads" visual but immediate start:
+                        // Inner: Standard smooth expansion
+                        // Outer: Slightly delayed curve response but p=0 -> val=0 always.
 
-                      // Limit snap speed so inhale->hold transitions don't "teleport".
-                      const maxHoldSpeed = 6; // px/s
-                      const holdSpeed = Math.hypot(holdVx, holdVy);
-                      if (holdSpeed > maxHoldSpeed) {
-                        const s = maxHoldSpeed / holdSpeed;
-                        holdVx *= s;
-                        holdVy *= s;
+                        const easeInner = easeInOutSine(p);
+                        // Outer lags in value, not time.
+                        // Power curve makes it stay low longer then shoot up.
+                        const easeOuter = Math.pow(p, 2.5);
+
+                        // Blend based on distance
+                        // Inner (dRatio=0) uses easeInner
+                        // Outer (dRatio=1) uses easeOuter
+                        // But we want Inner to lead (be larger earlier).
+                        // easeInner (Sine) is usually higher than pow(p, 2.5) at early t.
+                        // e.g. at p=0.5: Sine=0.5, Pow(0.5, 2.5)=0.17 -> Inner is way ahead. Good.
+
+                        const progress = easeInner * (1 - dRatio) + easeOuter * dRatio;
+
+                        currentScale = 0.8 + (1.4 - 0.8) * progress;
+
+                      } else if (tInCycle < 11) {
+                        // --- HOLD (4-11s) ---
+                        // Target: 1.4
+                        currentScale = 1.4;
+
+                      } else {
+                        // --- EXHALE (11-19s) ---
+                        // Target: 1.4 -> 0.8
+                        const phaseDur = 8.0;
+                        const p = (tInCycle - 11) / phaseDur;
+
+                        // Logic: All start at t=0 (p=0).
+                        // Outer leads (shrinks faster/earlier).
+                        // Inner lags (stays big longer).
+
+                        // Outer: Fast contraction (Ease Out Quart)
+                        const easeOuter = 1 - Math.pow(1 - p, 4);
+                        // p=0.1 -> 1 - 0.9^4 = 0.34 (shrunk 34% already)
+
+                        // Inner: Slow contraction initially (Ease In Quad)
+                        const easeInner = p * p;
+                        // p=0.1 -> 0.01 (shrunk 1% only)
+
+                        // At p=0, both are 0.
+                        // At p=1, both are 1.
+                        // Blend:
+                        const progress = easeInner * (1 - dRatio) + easeOuter * dRatio;
+
+                        // progress 0 -> Scale 1.4
+                        // progress 1 -> Scale 0.8
+                        currentScale = 1.4 - (1.4 - 0.8) * progress;
                       }
 
-                      const vx = flowV.vx * wFlow + holdVx * wHold;
-                      const vy = flowV.vy * wFlow + holdVy * wHold;
+                      const targetScale = currentScale;
+
+                      // 2. Calculate Shimmer (Hold phase only)
+                      let waveScaleDelta = 0;
+
+                      // Soft mask for Hold phase (4s to 11s)
+                      let shimmerMask = 0;
+                      if (tInCycle >= 4 && tInCycle < 11) {
+                         // Normalized time within hold phase [0, 1]
+                         const hDuration = 7;
+                         const hTime = tInCycle - 4;
+
+                         // Fade in over 1.5s, Fade out over 1.5s
+                         const fadeDur = 1.5;
+
+                         if (hTime < fadeDur) {
+                           shimmerMask = smoothStep(hTime / fadeDur);
+                         } else if (hTime > hDuration - fadeDur) {
+                           shimmerMask = smoothStep((hDuration - hTime) / fadeDur);
+                         } else {
+                           shimmerMask = 1;
+                         }
+                      }
+
+                      if (shimmerMask > 0) {
+                        // Slowed down frequency (~0.8Hz), opposing phases
+                        waveScaleDelta =
+                          Math.sin(elapsedActiveSec * 5.0 + dRatio * Math.PI) *
+                          0.02 * shimmerMask;
+                      }
+
+                      // Combine breathing scale and shimmer
+                      const finalScale = targetScale + waveScaleDelta;
+
+                      // 3. Calculate Target Offset (Radial Only)
+                      const vPxX = ((pp.x - 50) / 50) * 300;
+                      const vPxY = ((pp.y - 50) / 50) * 300;
+
+                      // Target offset from the base position
+                      const targetDx = vPxX * (finalScale - 1);
+                      const targetDy = vPxY * (finalScale - 1);
+
+                      // 4. Apply Spring Force
+                      const stiffness = 3.0;
+                      const springVx = (targetDx - dx) * stiffness;
+                      const springVy = (targetDy - dy) * stiffness;
+
+                      // 5. Integrate
+                      const vx = springVx;
+                      const vy = springVy;
 
                       dx += vx * dt;
                       dy += vy * dt;
@@ -898,29 +921,30 @@ export default function MeditationClient() {
                           elapsedActiveSec,
                           tInCycle,
                           phase: phase.phase,
-                          wHold,
-                          wFlow,
+                          wHold: 0,
+                          wFlow: 0,
                           dx,
                           dy,
                           dMag: Math.hypot(dx, dy),
-                          holdJdx: holdJ.dx,
-                          holdJdy: holdJ.dy,
-                          holdJMag: Math.hypot(holdJ.dx, holdJ.dy),
-                          flowVx: flowV.vx,
-                          flowVy: flowV.vy,
-                          flowVMag: Math.hypot(flowV.vx, flowV.vy),
-                          holdVx,
-                          holdVy,
-                          holdVMag: Math.hypot(holdVx, holdVy),
+                          holdJdx: 0,
+                          holdJdy: 0,
+                          holdJMag: 0,
+                          flowVx: 0,
+                          flowVy: 0,
+                          flowVMag: 0,
+                          holdVx: springVx,
+                          holdVy: springVy,
+                          holdVMag: Math.hypot(springVx, springVy),
                           vx,
                           vy,
                           vMag: Math.hypot(vx, vy),
-                          ringPullVx,
-                          ringPullVy,
+                          ringPullVx: 0,
+                          ringPullVy: 0,
                           stiffness,
-                          follow,
+                          follow: 0,
                         };
 
+                        // eslint-disable-next-line
                         const nowMs = performance.now();
                         if (nowMs - lastDebugUpdateMsRef.current >= 100) {
                           lastDebugUpdateMsRef.current = nowMs;
@@ -936,6 +960,9 @@ export default function MeditationClient() {
                     const dyn =
                       positionsRef.current.get(i) ??
                       ({ dx: 0, dy: 0 } satisfies Offset);
+
+                    const xPos = p.x;
+                    const yPos = p.y;
 
                     const dx = p.baseDx + dyn.dx;
                     const dy = p.baseDy + dyn.dy;
@@ -953,8 +980,8 @@ export default function MeditationClient() {
                         data-testid="breathing-particle"
                         className="absolute rounded-full"
                         style={{
-                          left: `${p.x}%`,
-                          top: `${p.y}%`,
+                          left: `${xPos.toFixed(3)}%`,
+                          top: `${yPos.toFixed(3)}%`,
                           width: `${sizePx.toFixed(2)}px`,
                           height: `${sizePx.toFixed(2)}px`,
                           opacity: baseOpacity,
