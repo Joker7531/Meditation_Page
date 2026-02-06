@@ -1083,7 +1083,7 @@ export default function MeditationClient() {
                 setStatus("running");
               }
             }}
-            className="rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed font-hand text-xl"
+            className="rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium hover:border-zinc-500 hover:bg-white/5 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed font-hand text-xl"
           >
             {status === "running" ? "Pause" : "Resume"}
           </button>
@@ -1098,7 +1098,7 @@ export default function MeditationClient() {
               setWarmupSeconds(3);
               setStatus("warmup");
             }}
-            className="rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300 font-hand text-xl"
+            className="rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium hover:border-zinc-500 hover:bg-white/5 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 font-hand text-xl"
           >
             Restart
           </button>
@@ -1107,7 +1107,7 @@ export default function MeditationClient() {
             type="button"
             tabIndex={uiHidden ? -1 : 0}
             onClick={() => end("early")}
-            className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-black hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 font-hand text-xl"
+            className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-black hover:bg-zinc-200 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 font-hand text-xl"
           >
             End
           </button>
