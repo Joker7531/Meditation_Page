@@ -40,6 +40,11 @@
   - Adjusted progress bar width and font sizes for better visual hierarchy.
 - **Logic Refinements**:
   - Fixed "Restart" behavior: now correctly resets to the **Warmup** phase (triggering the 3s countdown) instead of immediately starting the breathing loop.
+- **UI Redesign (Landing & Completion)**:
+  - **Layout**: Shifted to a centered, spacious layout for better focus and aesthetics.
+  - **Visual Consistency**: Unified background with the deep blue radial gradient from the meditation session.
+  - **Typography**: Extended `Caveat` handwritten font to page titles, key metrics (cycle count), and primary actions.
+  - **Micro-interactions**: Added tactile hover/active states (scale, glow, shadow) to buttons for "emotional design" feedback.
 
 ### Work Completed
 - **Fixed Wave Animation Distortion**:

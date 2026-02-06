@@ -48,7 +48,9 @@ This repository contains a runnable **Next.js App Router** application under `ap
 - Reduced motion: timer + text unchanged; visual scaling becomes discrete per phase.
 
 ### Visuals
-- **Typography**: Uses `Inter` for functional UI and `Caveat` (handwritten style) for the "human" elements: Title, Phase Prompts ("Breathe In"), and Controls.
+- **Design System**: Deep blue radial gradient background and centered layouts unified across all routes (Landing, Meditation, Completion).
+- **Typography**: `Caveat` (handwritten) used for "human" layer (Titles, Prompts, Controls, Key Metrics); `Inter` for functional data/labels.
+- **Interactions**: Buttons use "emotional design" cues (breathing glow, tactile scale press) to invite interaction.
 - **Warmup**: dedicated phase with a full-screen dark overlay and a zoom-in countdown animation (3-2-1) before the session begins.
 - **Breathing circle**: scaling follows 0.8→1.2→0.8 across 4/7/8 seconds with a radial ripple effect.
 - **Particles**: P0 deterministic 50-dot layout + ~180 background particles.
