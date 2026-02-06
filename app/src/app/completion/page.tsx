@@ -83,44 +83,52 @@ function CompletionContent() {
   }, [searchParams]);
 
   return (
-    <main className="min-h-screen bg-black text-zinc-100">
-      <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-6 px-6">
+    <main
+      className="min-h-screen text-zinc-100"
+      style={{
+        background:
+          "radial-gradient(1200px circle at 50% 20%, #1e1b4b 0%, #0f172a 55%, #020617 100%)",
+      }}
+    >
+      <div className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center gap-10 px-6 animate-warmup">
         <header className="text-center">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {summary.endReason === "normal" ? "Completed" : "Ended early"}
+          <h1 className="text-6xl font-semibold tracking-tight font-hand mb-4">
+            {summary.endReason === "normal" ? "Session Complete" : "Session Paused"}
           </h1>
-          <p className="mt-2 text-zinc-400">本次时长 {formatDuration(summary.elapsedActiveSec)}</p>
+          <p className="text-zinc-400 text-lg">
+            Time Focused: <span className="text-white font-medium">{formatDuration(summary.elapsedActiveSec)}</span>
+          </p>
         </header>
 
-        <section className="w-full rounded-lg border border-zinc-800 bg-zinc-950 p-5">
-          <h2 className="text-lg font-medium">Summary</h2>
+        <section className="w-full flex flex-col items-center gap-8">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-6xl font-bold font-hand text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.4)]">
+              {summary.completedCycles}
+            </span>
+            <span className="text-zinc-400 uppercase tracking-widest text-xs">Breathing Cycles</span>
+          </div>
 
-          <dl className="mt-4 grid grid-cols-1 gap-3 text-sm">
-            <div className="flex justify-between gap-4">
-              <dt className="text-zinc-400">Completed cycles</dt>
-              <dd className="font-semibold" aria-label="completed-cycles">
-                {summary.completedCycles}
-              </dd>
+          {summary.endReason === "early" ? (
+            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-6 py-4 text-center max-w-xs">
+              <p className="font-hand text-2xl text-amber-200 mb-1">Good Start!</p>
+              <p className="text-sm text-amber-200/60 leading-relaxed">
+                Even a few moments of mindfulness make a difference.
+              </p>
             </div>
+          ) : (
+            <div className="h-4"></div> // Spacer to keep layout stable
+          )}
 
-            {summary.endReason === "early" ? (
-              <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
-                <p className="font-medium text-amber-200">提前结束</p>
-                <p className="mt-1 text-amber-200/80">You can continue next time.</p>
-              </div>
-            ) : null}
-          </dl>
-
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-4 flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
             <button
               type="button"
               onClick={() => {
                 // Keep last duration selection
                 router.push(`/meditation?durationMin=${summary.durationMin}`);
               }}
-              className="rounded-md bg-emerald-500 px-5 py-2 text-sm font-semibold text-black hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              className="w-full sm:w-auto min-w-[160px] rounded-full bg-zinc-100 px-8 py-3 text-xl font-bold font-hand text-black shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300"
             >
-              再来一次
+              Breathe Again
             </button>
 
             <button
@@ -130,9 +138,9 @@ function CompletionContent() {
                 window.sessionStorage.removeItem(SUMMARY_KEY);
                 router.push("/");
               }}
-              className="rounded-md border border-zinc-700 bg-transparent px-5 py-2 text-sm font-semibold text-zinc-100 hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+              className="w-full sm:w-auto min-w-[160px] rounded-full border border-zinc-700 bg-transparent px-8 py-3 text-xl font-bold font-hand text-zinc-300 hover:border-zinc-500 hover:bg-white/5 hover:text-white hover:scale-105 active:scale-95 transition-all duration-300"
             >
-              返回首页
+              Back Home
             </button>
           </div>
         </section>

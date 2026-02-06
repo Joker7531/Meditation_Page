@@ -53,42 +53,49 @@ function HomeContent() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-zinc-100">
-      <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-6 px-6">
-        <header className="text-center">
-          <h1 className="text-3xl font-semibold tracking-tight">Landing</h1>
-          <p className="mt-2 text-zinc-400">Select a duration and start 4-7-8 breathing.</p>
+    <main
+      className="min-h-screen text-zinc-100"
+      style={{
+        background:
+          "radial-gradient(1200px circle at 50% 20%, #1e1b4b 0%, #0f172a 55%, #020617 100%)",
+      }}
+    >
+      <div className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center gap-10 px-6">
+        <header className="text-center animate-warmup">
+          <h1 className="text-6xl font-semibold tracking-tight font-hand mb-2">4-7-8 Breathing</h1>
+          <p className="text-zinc-400 text-lg">Select a duration to begin your session.</p>
         </header>
 
-        <section className="w-full rounded-lg border border-zinc-800 bg-zinc-950 p-5">
-          <h2 className="text-lg font-medium">Duration</h2>
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            {[5, 10, 15].map((min) => (
-              <button
-                key={min}
-                type="button"
-                className={
-                  selectedMin === min
-                    ? "rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-zinc-300"
-                    : "rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium text-zinc-100 hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300"
-                }
-                onClick={() => {
-                  setSelectedMin(min);
-                  setCustomRaw(String(min));
-                  setTouchedCustom(false);
-                }}
-              >
-                {min} min
-              </button>
-            ))}
+        <section className="w-full flex flex-col items-center gap-8">
+          <div className="flex flex-col items-center gap-4 w-full">
+            <h2 className="text-2xl font-medium font-hand text-zinc-300">Choose Duration</h2>
+            <div className="flex flex-wrap justify-center gap-4">
+              {[5, 10, 15].map((min) => (
+                <button
+                  key={min}
+                  type="button"
+                  className={
+                    selectedMin === min
+                      ? "min-w-[80px] rounded-full bg-zinc-100 px-6 py-3 text-lg font-bold text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] transform scale-105 transition-all duration-300"
+                      : "min-w-[80px] rounded-full border border-zinc-700 bg-black/20 px-6 py-3 text-lg font-medium text-zinc-300 hover:border-zinc-500 hover:bg-white/5 hover:scale-105 transition-all duration-300"
+                  }
+                  onClick={() => {
+                    setSelectedMin(min);
+                    setCustomRaw(String(min));
+                    setTouchedCustom(false);
+                  }}
+                >
+                  {min}m
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="mt-5">
-            <label htmlFor="duration-custom" className="block text-sm font-medium">
-              Custom (1–60 minutes)
+          <div className="flex flex-col items-center gap-3">
+             <label htmlFor="duration-custom" className="text-zinc-400 text-sm hover:text-zinc-200 transition-colors cursor-pointer">
+              Or enter custom minutes (1–60)
             </label>
-            <div className="mt-2 flex items-center gap-3">
+            <div className="relative group">
               <input
                 id="duration-custom"
                 inputMode="numeric"
@@ -103,33 +110,29 @@ function HomeContent() {
                   }
                 }}
                 onBlur={() => setTouchedCustom(true)}
-                className="w-32 rounded-md border border-zinc-700 bg-black px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-300 focus:ring-2 focus:ring-zinc-300"
+                className="w-24 text-center rounded-lg border-b-2 border-zinc-700 bg-transparent py-2 text-2xl font-hand text-zinc-100 outline-none focus:border-emerald-400 transition-colors placeholder-zinc-700"
                 aria-invalid={customError ? "true" : "false"}
-                aria-describedby={customError ? "duration-error" : undefined}
               />
-              <span className="text-sm text-zinc-400">minutes</span>
+              {customError && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max text-red-400 text-sm font-hand animate-pulse">
+                  1-60 mins only
+                </div>
+              )}
             </div>
-            {customError ? (
-              <p id="duration-error" className="mt-2 text-sm text-red-400">
-                请输入 1-60 之间的整数
-              </p>
-            ) : null}
           </div>
 
-          <div className="mt-6 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={start}
-              disabled={!canStart}
-              className={
-                canStart
-                  ? "rounded-md bg-emerald-500 px-5 py-2 text-sm font-semibold text-black hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-                  : "cursor-not-allowed rounded-md bg-zinc-800 px-5 py-2 text-sm font-semibold text-zinc-400"
-              }
-            >
-              Start
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={start}
+            disabled={!canStart}
+            className={
+              canStart
+                ? "mt-4 rounded-full bg-emerald-500/90 px-12 py-4 text-2xl font-bold font-hand text-black shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:bg-emerald-400 hover:scale-105 hover:shadow-[0_0_50px_rgba(16,185,129,0.6)] active:scale-95 transition-all duration-300"
+                : "mt-4 rounded-full bg-zinc-800/50 px-12 py-4 text-2xl font-bold font-hand text-zinc-500 cursor-not-allowed transition-all duration-300"
+            }
+          >
+            Start Breathing
+          </button>
         </section>
       </div>
     </main>
