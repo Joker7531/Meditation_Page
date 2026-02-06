@@ -237,8 +237,24 @@ export default function MeditationClient() {
     };
   }, [searchParams]);
 
-  const [status, setStatus] = useState<"running" | "paused">("running");
+  const [status, setStatus] = useState<"warmup" | "running" | "paused">("warmup");
+  const [warmupSeconds, setWarmupSeconds] = useState(3);
   const [elapsedActiveSec, setElapsedActiveSec] = useState(0);
+
+  useEffect(() => {
+    if (status === "warmup") {
+      const timer = window.setInterval(() => {
+        setWarmupSeconds((s) => {
+          if (s <= 1) {
+            setStatus("running");
+            return 3; // Reset for next time (though we switch state)
+          }
+          return s - 1;
+        });
+      }, 1000);
+      return () => window.clearInterval(timer);
+    }
+  }, [status]);
 
   const lastTickMsRef = useRef<number | null>(null);
   const rafIdRef = useRef<number | null>(null);
@@ -263,6 +279,7 @@ export default function MeditationClient() {
   const positionsRef = useRef<Map<number, Offset>>(new Map());
 
   const phaseOpacity = useMemo(() => {
+    if (status === "warmup") return 1;
     if (status === "paused") return 0.7;
     if (prefersReducedMotion) return 1;
 
@@ -724,12 +741,13 @@ export default function MeditationClient() {
                     textShadow: "0 0 24px rgba(0,0,0,0.55)",
                   }}
                 >
-                  {phase.label}
+                  {status === "warmup" ? String(warmupSeconds) : phase.label}
                 </p>
 
                 <div
                   aria-hidden="true"
                   className="mt-3 h-1 w-44 overflow-hidden rounded-full bg-white/10"
+                  style={{ opacity: status === "warmup" ? 0 : 1, transition: "opacity 300ms" }}
                 >
                   <div
                     className="h-full rounded-full bg-white/50"
@@ -957,9 +975,24 @@ export default function MeditationClient() {
                   }
 
                   return particles.map((p, i) => {
-                    const dyn =
-                      positionsRef.current.get(i) ??
-                      ({ dx: 0, dy: 0 } satisfies Offset);
+                    let dyn = positionsRef.current.get(i);
+
+                    // Initialize particles to contracted state (Scale 0.8) during warmup
+                    // so they don't jump/shrink when the physics loop starts.
+                    if (status === "warmup" && !prefersReducedMotion) {
+                      const vPxX = ((p.x - 50) / 50) * 300;
+                      const vPxY = ((p.y - 50) / 50) * 300;
+                      const scale08 = 0.8;
+                      dyn = {
+                        dx: vPxX * (scale08 - 1),
+                        dy: vPxY * (scale08 - 1),
+                      };
+                      positionsRef.current.set(i, dyn);
+                    }
+
+                    if (!dyn) {
+                      dyn = { dx: 0, dy: 0 };
+                    }
 
                     const xPos = p.x;
                     const yPos = p.y;
@@ -1035,6 +1068,7 @@ export default function MeditationClient() {
           <button
             type="button"
             tabIndex={uiHidden ? -1 : 0}
+            disabled={status === "warmup"}
             onClick={() => {
               if (status === "running") {
                 setStatus("paused");
@@ -1043,7 +1077,7 @@ export default function MeditationClient() {
                 setStatus("running");
               }
             }}
-            className="rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+            className="rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {status === "running" ? "Pause" : "Resume"}
           </button>
