@@ -707,7 +707,7 @@ export default function MeditationClient() {
             pointerEvents: uiHidden ? "none" : "auto",
           }}
         >
-          <h1 className="text-3xl font-semibold tracking-tight">Meditation</h1>
+          <h1 className="text-3xl font-semibold tracking-tight font-hand">Meditation</h1>
           <p className="mt-2 text-zinc-400">
             Target: {formatDuration(init.targetDurationSec)} ({init.durationMin}{" "}
             min)
@@ -725,19 +725,25 @@ export default function MeditationClient() {
             aria-label="Breathing guide"
             className="relative h-[600px] w-[600px]"
           >
-            <div className="absolute inset-0 flex items-center justify-center">
+            {/* Overlay for warmup - Full Screen */}
+            {status === "warmup" && (
+              <div className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-500" />
+            )}
+
+            <div className="absolute inset-0 flex items-center justify-center z-50">
               <div className="flex flex-col items-center">
                 <p
+                  key={status === "warmup" ? warmupSeconds : "phase"}
                   data-testid="phase-text"
                   aria-live="polite"
-                  className="select-none text-2xl font-semibold tracking-tight"
+                  className={`select-none text-[26px] font-semibold tracking-tight ${
+                    status === "warmup" ? "animate-warmup" : "font-hand"
+                  }`}
                   style={{
                     opacity: phaseOpacity,
                     transition: prefersReducedMotion
                       ? "opacity 150ms linear"
                       : "opacity 600ms ease",
-                    fontFamily:
-                      "var(--font-inter), Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
                     textShadow: "0 0 24px rgba(0,0,0,0.55)",
                   }}
                 >
@@ -746,7 +752,7 @@ export default function MeditationClient() {
 
                 <div
                   aria-hidden="true"
-                  className="mt-3 h-1 w-44 overflow-hidden rounded-full bg-white/10"
+                  className="mt-3 h-1 w-36 overflow-hidden rounded-full bg-white/10"
                   style={{ opacity: status === "warmup" ? 0 : 1, transition: "opacity 300ms" }}
                 >
                   <div
@@ -1077,7 +1083,7 @@ export default function MeditationClient() {
                 setStatus("running");
               }
             }}
-            className="rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed font-hand text-lg"
           >
             {status === "running" ? "Pause" : "Resume"}
           </button>
@@ -1091,7 +1097,7 @@ export default function MeditationClient() {
               setElapsedActiveSec(0);
               setStatus("running");
             }}
-            className="rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+            className="rounded-md border border-zinc-700 bg-transparent px-4 py-2 text-sm font-medium hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300 font-hand text-lg"
           >
             Restart
           </button>
@@ -1100,7 +1106,7 @@ export default function MeditationClient() {
             type="button"
             tabIndex={uiHidden ? -1 : 0}
             onClick={() => end("early")}
-            className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-black hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+            className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-black hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 font-hand text-lg"
           >
             End
           </button>
